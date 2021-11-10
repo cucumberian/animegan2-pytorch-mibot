@@ -2,7 +2,6 @@
 requests
 pillow
 torchvision
-torch
 
 # for face detection
 scipy
@@ -11,3 +10,7 @@ dlib
 
 # for telegram bot
 pytelegrambotapi
+
+
+#base heavy
+torch

@@ -1,3 +1,4 @@
+import os
 model_fname = "face_paint_512_v2_0.pt"
 if not os.path.isfile(model_fname):
     os.system(f"wget -O {model_fname} https://drive.google.com/uc?id=18H3iK09_d54qEDoWIc82SyWB2xun4gjU")

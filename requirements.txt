@@ -1,0 +1,13 @@
+#base
+requests
+pillow
+torchvision
+torch
+
+# for face detection
+scipy
+CMake
+dlib
+
+# for telegram bot
+pytelegrambotapi

@@ -232,8 +232,18 @@ def get_response_to_photo(message):
 def get_any_response(message):
     bot.send_message(
         chat_id=message.chat.id,
-        text=message.text
+        text="This bot works only with photos."
     )
 
 
-bot.polling(none_stop=True, interval=2, timeout=20)
+
+
+if __name__ == "__main__":
+    import time
+    while True:
+        try:
+            bot.polling(none_stop=True, interval=10, timeout=30)
+        except Exception as e:
+            print(e)
+            time.sleep(20)
+

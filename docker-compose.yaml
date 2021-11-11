@@ -1,0 +1,9 @@
+version: "2"
+services:
+
+        animegan2_pytorch:
+                build: src/
+                restart: unless-stopped
+                environment:
+                        - TEL_API_KEY=<TELEGRAM_API_KEY_HERE>
+

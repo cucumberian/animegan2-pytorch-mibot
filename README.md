@@ -1,4 +1,6 @@
 # animegan2-pytorch-mibot
+<h3> animegan2-pytorch Telegram bot</h3>
+based on google collab from https://github.com/bryandlee/animegan2-pytorch
 
 <h4>docker instructions</h4>
 

@@ -59,8 +59,7 @@ def get_dlib_face_detector(predictor_path: str = "shape_predictor_68_face_landma
     if not os.path.isfile(predictor_path):
         model_file = "shape_predictor_68_face_landmarks.dat.bz2"
         os.system(f"wget http://dlib.net/files/{model_file}")
-        os.system(f"bzip2 -dk {model_file}")
-        os.remove(model_file)
+        os.system(f"bzip2 -d {model_file}")
 
     detector = dlib.get_frontal_face_detector()
     shape_predictor = dlib.shape_predictor(predictor_path)
@@ -171,6 +170,8 @@ IMAGE_FOLDER = "./tmp"
 
 bot = telebot.TeleBot(TELEGRAM_API_KEY)
 
+print('bot started')
+
 @bot.message_handler(commands=["start"])
 def get_start_message(message):
     bot.send_message(
@@ -191,9 +192,20 @@ https://github.com/bryandlee/animegan2-pytorch
 
 @bot.message_handler(content_types=["photo"])
 def get_response_to_photo(message):
-    user_id = message.from_user.id
     file_id = message.photo[-1].file_id
-    file_info = bot.prage.open(file_name)
+    file_info = bot.get_file(file_id=file_id)
+    downloaded_file = bot.download_file(file_info.file_path)
+    file_name = os.path.join(IMAGE_FOLDER, f"{file_id}.png")
+
+    if not os.path.exists(IMAGE_FOLDER):
+        os.mkdir(IMAGE_FOLDER)
+
+    with open(file=file_name, mode='wb') as f:
+        f.write(downloaded_file)
+    
+    input_image = Image.open(file_name)
+
+    input_image = input_image.convert('RGB')
     os.remove(file_name)
     output_image_1 = face2paint(img=input_image, size=512, side_by_side=False)
     output_filename, ext = os.path.splitext(os.path.basename(file_name))

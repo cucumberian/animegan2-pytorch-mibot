@@ -1,4 +1,9 @@
 import os
+
+source_name = "animegan2-pytorch"
+if not os.path.isdir(source_name):
+    os.system(f"git clone https://github.com/bryandlee/animegan2-pytorch")
+
 model_fname = "face_paint_512_v2_0.pt"
 if not os.path.isfile(model_fname):
     os.system(f"wget -O {model_fname} https://drive.google.com/uc?id=18H3iK09_d54qEDoWIc82SyWB2xun4gjU")
@@ -11,7 +16,10 @@ import torch
 
 from model import Generator
 
-device = "cpu"
+#device = "cpu"
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(f"{device = }")
+
 
 model = Generator().eval().to(device)
 model.load_state_dict(torch.load(model_fname))
@@ -26,10 +34,32 @@ def face2paint(
 ) -> Image.Image:
 
     w, h = img.size
-    s = min(w, h)
-    img = img.crop(((w - s) // 2, (h - s) // 2, (w + s) // 2, (h + s) // 2))
-    img = img.resize((size, size), Image.LANCZOS)
 
+    print(f"{size = }")
+    print(f"{w = }, {h = }")
+
+    # crop image to minimal side
+    #s = min(w, h)
+    #img = img.crop(((w - s) // 2, (h - s) // 2, (w + s) // 2, (h + s) // 2))
+
+    # uncrop image to max size
+    ms = max(w, h)
+    
+    x = 1
+    if ms > size:
+        x = size / ms
+
+    #img = img.crop(((w - ms) // 2, (h - ms) // 2, (w + ms) // 2, (h + ms) // 2))
+
+    #img = img.resize((size, size), Image.LANCZOS)
+
+    new_w = int(w * x)
+    new_h = int(h * x)
+    
+    print(f"{new_w = }, {new_h = }")
+    img = img.resize((new_w, new_h), Image.LANCZOS)
+
+    
     input = to_tensor(img).unsqueeze(0) * 2 - 1
     output = model(input.to(device)).cpu()[0]
 
@@ -53,12 +83,21 @@ from typing import Union, List
 import numpy as np
 from PIL import Image
 
+predictor_path = "shape_predictor_68_face_landmarks.dat"
+if not os.path.isfile(predictor_path):
+    model_file = "shape_predictor_68_face_landmarks.dat.bz2"
+    if not os.path.isfile(model_file):
+        os.system(f"wget http://dlib.net/files/{model_file}")
+    os.system(f"bzip2 -d {model_file}")
+
+
 
 def get_dlib_face_detector(predictor_path: str = "shape_predictor_68_face_landmarks.dat"):
 
     if not os.path.isfile(predictor_path):
-        model_file = "shape_predictor_68_face_landmarks.dat.bz2"
-        os.system(f"wget http://dlib.net/files/{model_file}")
+        if not os.path.isfile(f"{predictor_path}.bz2"):
+            model_file = "shape_predictor_68_face_landmarks.dat.bz2"
+            os.system(f"wget http://dlib.net/files/{model_file}")
         os.system(f"bzip2 -d {model_file}")
 
     detector = dlib.get_frontal_face_detector()
@@ -163,9 +202,17 @@ def align_and_crop_face(
     return img
 
 
+
 import telebot
 import os
 TELEGRAM_API_KEY = os.environ.get("TEL_API_KEY") or "YOU_NEED_AN_API_KEY_FOR_TELEGRAM_BOT"
+try:
+    IMAGE_SIZE = int(os.environ.get("IMAGE_SIZE")) or 512
+except Exception as e:
+    print(e)
+    IMAGE_SIZE = 512
+print(f"{IMAGE_SIZE = }")
+
 IMAGE_FOLDER = "./tmp"
 
 bot = telebot.TeleBot(TELEGRAM_API_KEY)
@@ -192,22 +239,20 @@ https://github.com/bryandlee/animegan2-pytorch
 
 @bot.message_handler(content_types=["photo"])
 def get_response_to_photo(message):
+
     file_id = message.photo[-1].file_id
     file_info = bot.get_file(file_id=file_id)
     downloaded_file = bot.download_file(file_info.file_path)
     file_name = os.path.join(IMAGE_FOLDER, f"{file_id}.png")
-
     if not os.path.exists(IMAGE_FOLDER):
         os.mkdir(IMAGE_FOLDER)
-
     with open(file=file_name, mode='wb') as f:
         f.write(downloaded_file)
-    
     input_image = Image.open(file_name)
-
     input_image = input_image.convert('RGB')
     os.remove(file_name)
-    output_image_1 = face2paint(img=input_image, size=512, side_by_side=False)
+
+    output_image_1 = face2paint(img=input_image, size=IMAGE_SIZE, side_by_side=False)
     output_filename, ext = os.path.splitext(os.path.basename(file_name))
     output_filename_1 = os.path.join(IMAGE_FOLDER, f"{output_filename}_out_1.png")
     output_image_1.save(output_filename_1)
@@ -217,6 +262,7 @@ def get_response_to_photo(message):
     os.remove(output_filename_1)
 
     output_filename_2 = os.path.join(IMAGE_FOLDER, f"{output_filename}_out_2.png")
+
     face_detector = get_dlib_face_detector()
     landmarks = face_detector(input_image)
     for landmark in landmarks:
@@ -226,6 +272,7 @@ def get_response_to_photo(message):
         with open(file=output_filename_2, mode='rb') as f:
             bot.send_photo(message.chat.id, f)
         os.remove(output_filename_2)
+        
 
 
 @bot.message_handler(content_types=["text"])

@@ -14,3 +14,6 @@ pytelegrambotapi
 
 #base heavy
 torch
+
+#pymongo
+pymongo[srv]

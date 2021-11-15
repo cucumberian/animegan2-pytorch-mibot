@@ -7,4 +7,5 @@ services:
                 restart: always
                 environment:
                         - TEL_API_KEY=<INSERT_TELEGRAM_BOT_API_KEY_HERE>
-                        - IMAGE_SIZE=512
+                        - IMAGE_SIZE=512                                        # optional, default value - 512
+                        - MONGO_URL=<INSERT_MONGO_CONNECT_STRING_HERE>          # optional

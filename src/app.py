@@ -114,7 +114,7 @@ def get_dlib_face_detector(predictor_path: str = "shape_predictor_68_face_landma
             shape = shape_predictor(img, d)
             faces.append(np.array([[v.x, v.y] for v in shape.parts()]))
         return faces
-    
+
     return detect_face_landmarks
 
 # https://github.com/NVlabs/ffhq-dataset/blob/master/download_ffhq.py
@@ -208,7 +208,6 @@ def align_and_crop_face(
 import datetime
 class MongoDB():
 
-
     @staticmethod
     def get_hash(element):
         return hashlib.sha256(str(element).encode("utf-8")).hexdigest()
@@ -219,15 +218,23 @@ class MongoDB():
             self.db = self.client.animegan2_pytorch_tel_bot
             print('connected to MongoDB')
         else: 
-            self.client=None
+            self.client = None
     
     def add_photo_query(self, message):
         if self.client:
+            # get complex string for hashing
+            user_string = str(message.from_user.id) + str(message.from_user.username) + \
+                str(message.from_user.first_name) + str(message.from_user.last_name)
+            # get complex string for hashing
+            chat_string = str(message.chat.id) + str(message.chat.type) + str(message.chat.description) + \
+                str(message.chat.title) + \
+                str(message.chat.username) + str(message.chat.first_name) + str(message.chat.last_name)
+
             data = {
                 'date': datetime.datetime.fromtimestamp(message.date),
-                'user_id': MongoDB.get_hash(message.from_user.id),
-                'chat_id': MongoDB.get_hash(message.chat.id),
-                'file_id': MongoDB.get_hash(message.photo[-1].file_id)
+                'user_id': MongoDB.get_hash(user_string),   # hashing vs reptiloids
+                'chat_id': MongoDB.get_hash(chat_string),   # hashing vs reptiloids
+                'file_id': MongoDB.get_hash(message.photo[-1].file_id)  # protect vs reptiloids
             }
             res = self.db.photo_query.insert_one(data)
             return res
@@ -249,7 +256,7 @@ bot = telebot.TeleBot(TELEGRAM_API_KEY)
 print('bot started')
 
 
-MONGO_URL= os.environ.get("MONGO_URL") or None
+MONGO_URL = os.environ.get("MONGO_URL") or None
 mongodb = MongoDB(MONGO_URL)
 
 
@@ -259,6 +266,7 @@ def get_start_message(message):
         chat_id=message.chat.id,
         text=f"Send portrait to a bot, {message.from_user.first_name}."
     )
+
 
 @bot.message_handler(commands=["help"])
 def show_help(message):
@@ -308,7 +316,7 @@ def get_response_to_photo(message):
         with open(file=output_filename_2, mode='rb') as f:
             bot.send_photo(message.chat.id, f)
         os.remove(output_filename_2)
-        
+
 
 
 @bot.message_handler(content_types=["text"])
@@ -329,120 +337,3 @@ if __name__ == "__main__":
         except Exception as e:
             print(e)
             time.sleep(20)
-
-
-# {
-#     'content_type': 'photo', 
-#     'id': 4613, 
-#     'message_id': 4613, 
-#     'from_user': {
-#         'id': 94658085, 
-#         'is_bot': False, 
-#         'first_name': 'Mi Vi', 
-#         'username': 'fowdeqaqogji', 
-#         'last_name': None, 
-#         'language_code': 'en', 
-#         'can_join_groups': None, 
-#         'can_read_all_group_messages': None, 
-#         'supports_inline_queries': None
-#     }, 
-#     'date': 1637010186, 
-#     'chat': {
-#         'id': 94658085, 
-#         'type': 'private', 
-#         'title': None, 
-#         'username': 'fowdeqaqogji', 
-#         'first_name': 'Mi Vi', 
-#         'last_name': None, 
-#         'photo': None, 
-#         'bio': None, 
-#         'description': None, 
-#         'invite_link': None, 
-#         'pinned_message': None, 
-#         'permissions': None, 
-#         'slow_mode_delay': None, 
-#         'message_auto_delete_time': None, 
-#         'sticker_set_name': None, 
-#         'can_set_sticker_set': None, 
-#         'linked_chat_id': None, 
-#         'location': None
-#     }, 
-#     'sender_chat': None, 
-#     'forward_from': None, 
-#     'forward_from_chat': None, 
-#     'forward_from_message_id': None, 
-#     'forward_signature': None, 
-#     'forward_sender_name': None, 
-#     'forward_date': None, 
-#     'reply_to_message': None, 
-#     'via_bot': None, 
-#     'edit_date': None, 
-#     'media_group_id': None, 
-#     'author_signature': None, 
-#     'text': None, 
-#     'entities': None, 
-#     'caption_entities': None, 
-#     'audio': None, 
-#     'document': None, 
-#     'photo': [
-#         <telebot.types.PhotoSize object at 0x7f56fd4b3430>, 
-#         <telebot.types.PhotoSize object at 0x7f56fd4b33a0>, 
-#         <telebot.types.PhotoSize object at 0x7f56fd4b3760>, 
-#         <telebot.types.PhotoSize object at 0x7f56fd4b3310>
-#     ], 
-#     'sticker': None, 
-#     'video': None, 
-#     'video_note': None, 
-#     'voice': None, 
-#     'caption': None, 
-#     'contact': None, 
-#     'location': None, 
-#     'venue': None, 
-#     'animation': None, 
-#     'dice': None, 
-#     'new_chat_member': None, 
-#     'new_chat_members': None, 
-#     'left_chat_member': None, 
-#     'new_chat_title': None, 
-#     'new_chat_photo': None, 
-#     'delete_chat_photo': None, 
-#     'group_chat_created': None, 
-#     'supergroup_chat_created': None, 
-#     'channel_chat_created': None, 
-#     'migrate_to_chat_id': None, 
-#     'migrate_from_chat_id': None, 
-#     'pinned_message': None, 
-#     'invoice': None, 
-#     'successful_payment': None, 
-#     'connected_website': None, 
-#     'reply_markup': None, 
-#     'json': {
-#         'message_id': 4613, 
-#         'from': {
-#             'id': 94658085, 
-#             'is_bot': False, 
-#             'first_name': 'Mi Vi', 
-#             'username': 'fowdeqaqogji', 
-#             'language_code': 'en'
-#         }, 
-#         'chat': {
-#             'id': 94658085, 
-#             'first_name': 'Mi Vi', 
-#             'username': 'fowdeqaqogji', 
-#             'type': 'private'
-#         }, 
-#         'date': 1637010186, 
-#         'photo': [
-#             {
-#                 'file_id': 'AgACAgIAAxkBAAISBWGSywmch-SizIH4RGVh4a70s7LVAAKSvDEbyc2ZSJ7W6Fk_faXNAQADAgADcwADIgQ', 
-#                 'file_unique_id': 'AQADkrwxG8nNmUh4', 
-#                 'file_size': 1624, 
-#                 'width': 90, 
-#                 'height': 90
-#             }, 
-#             {'file_id': 'AgACAgIAAxkBAAISBWGSywmch-SizIH4RGVh4a70s7LVAAKSvDEbyc2ZSJ7W6Fk_faXNAQADAgADbQADIgQ', 'file_unique_id': 'AQADkrwxG8nNmUhy', 'file_size': 23208, 'width': 320, 'height': 320}, 
-#             {'file_id': 'AgACAgIAAxkBAAISBWGSywmch-SizIH4RGVh4a70s7LVAAKSvDEbyc2ZSJ7W6Fk_faXNAQADAgADeAADIgQ', 'file_unique_id': 'AQADkrwxG8nNmUh9', 'file_size': 107134, 'width': 800, 'height': 800}, 
-#             {'file_id': 'AgACAgIAAxkBAAISBWGSywmch-SizIH4RGVh4a70s7LVAAKSvDEbyc2ZSJ7W6Fk_faXNAQADAgADeQADIgQ', 'file_unique_id': 'AQADkrwxG8nNmUh-', 'file_size': 107533, 'width': 900, 'height': 900}
-#         ]
-#     }
-# }
